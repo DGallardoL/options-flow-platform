@@ -1,10 +1,8 @@
 # Options Flow Intelligence Platform
 
-## Equipo
+## Equipo 2
 <!-- PLACEHOLDER: Agregar nombres del equipo -->
-- [Nombre 1]
-- [Nombre 2]
-- [Nombre 3]
+
 
 **Materia:** Bases de Datos No Relacionales  
 **Periodo:** Primavera 2026
