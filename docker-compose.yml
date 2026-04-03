@@ -1,0 +1,183 @@
+services:
+  # ============================================================
+  # CONFIG SERVER REPLICA SET (configrs) — stores sharding metadata
+  # ============================================================
+  configsvr1:
+    image: mongo:7
+    container_name: configsvr1
+    command: mongod --configsvr --replSet configrs --bind_ip_all --keyFile /etc/mongo/keyfile --port 27100
+    ports:
+      - "27100:27100"
+    volumes:
+      - configsvr1-data:/data/configdb
+      - ./docker/mongo/keyfile:/etc/mongo/keyfile:ro
+    networks:
+      - options-net
+    healthcheck:
+      test: mongosh --port 27100 --eval "db.adminCommand('ping')" --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ============================================================
+  # SHARD 1 REPLICA SET (rs0) — primary data shard
+  # ============================================================
+  mongo1:
+    image: mongo:7
+    container_name: mongo1
+    command: mongod --shardsvr --replSet rs0 --bind_ip_all --keyFile /etc/mongo/keyfile --port 27017
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo1-data:/data/db
+      - ./docker/mongo/keyfile:/etc/mongo/keyfile:ro
+    networks:
+      - options-net
+    healthcheck:
+      test: mongosh --port 27017 --eval "db.adminCommand('ping')" --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  mongo2:
+    image: mongo:7
+    container_name: mongo2
+    command: mongod --shardsvr --replSet rs0 --bind_ip_all --keyFile /etc/mongo/keyfile --port 27018
+    ports:
+      - "27018:27018"
+    volumes:
+      - mongo2-data:/data/db
+      - ./docker/mongo/keyfile:/etc/mongo/keyfile:ro
+    networks:
+      - options-net
+    healthcheck:
+      test: mongosh --port 27018 --eval "db.adminCommand('ping')" --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  mongo3:
+    image: mongo:7
+    container_name: mongo3
+    command: mongod --shardsvr --replSet rs0 --bind_ip_all --keyFile /etc/mongo/keyfile --port 27019
+    ports:
+      - "27019:27019"
+    volumes:
+      - mongo3-data:/data/db
+      - ./docker/mongo/keyfile:/etc/mongo/keyfile:ro
+    networks:
+      - options-net
+    healthcheck:
+      test: mongosh --port 27019 --eval "db.adminCommand('ping')" --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ============================================================
+  # SHARD 2 REPLICA SET (rs1) — second data shard
+  # ============================================================
+  mongo4:
+    image: mongo:7
+    container_name: mongo4
+    command: mongod --shardsvr --replSet rs1 --bind_ip_all --keyFile /etc/mongo/keyfile --port 27020
+    ports:
+      - "27020:27020"
+    volumes:
+      - mongo4-data:/data/db
+      - ./docker/mongo/keyfile:/etc/mongo/keyfile:ro
+    networks:
+      - options-net
+    healthcheck:
+      test: mongosh --port 27020 --eval "db.adminCommand('ping')" --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  mongo5:
+    image: mongo:7
+    container_name: mongo5
+    command: mongod --shardsvr --replSet rs1 --bind_ip_all --keyFile /etc/mongo/keyfile --port 27021
+    ports:
+      - "27021:27021"
+    volumes:
+      - mongo5-data:/data/db
+      - ./docker/mongo/keyfile:/etc/mongo/keyfile:ro
+    networks:
+      - options-net
+    healthcheck:
+      test: mongosh --port 27021 --eval "db.adminCommand('ping')" --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  mongo6:
+    image: mongo:7
+    container_name: mongo6
+    command: mongod --shardsvr --replSet rs1 --bind_ip_all --keyFile /etc/mongo/keyfile --port 27022
+    ports:
+      - "27022:27022"
+    volumes:
+      - mongo6-data:/data/db
+      - ./docker/mongo/keyfile:/etc/mongo/keyfile:ro
+    networks:
+      - options-net
+    healthcheck:
+      test: mongosh --port 27022 --eval "db.adminCommand('ping')" --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ============================================================
+  # MONGOS ROUTER — entry point for all client connections
+  # ============================================================
+  mongos:
+    image: mongo:7
+    container_name: mongos
+    command: mongos --configdb configrs/configsvr1:27100 --bind_ip_all --keyFile /etc/mongo/keyfile --port 27025
+    ports:
+      - "27025:27025"
+    volumes:
+      - ./docker/mongo/keyfile:/etc/mongo/keyfile:ro
+    depends_on:
+      configsvr1:
+        condition: service_healthy
+      mongo1:
+        condition: service_healthy
+      mongo2:
+        condition: service_healthy
+      mongo3:
+        condition: service_healthy
+      mongo4:
+        condition: service_healthy
+      mongo5:
+        condition: service_healthy
+      mongo6:
+        condition: service_healthy
+    networks:
+      - options-net
+    healthcheck:
+      test: mongosh --port 27025 --eval "db.adminCommand('ping')" --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  configsvr1-data:
+  mongo1-data:
+  mongo2-data:
+  mongo3-data:
+  mongo4-data:
+  mongo5-data:
+  mongo6-data:
+
+networks:
+  options-net:
+    driver: bridge
